@@ -15,10 +15,7 @@ class Order: Codable {
             case _specialRequestEnabled = "specialRequestEnabled"
             case _extraFrosting = "extraFrosting"
             case _addSprinkles = "addSprinkles"
-            case _name = "name"
-            case _streetAddress = "streetAddress"
-            case _city = "city"
-            case _zip = "zip"
+            case _address = "address"
         }
 
     static let types = ["Vanilla", "Strawberry", "Chocolate", "Rainbow"]
@@ -37,13 +34,23 @@ class Order: Codable {
     var extraFrosting = false
     var addSprinkles = false
 
-    var name = ""
-    var streetAddress = ""
-    var city = ""
-    var zip = ""
+    struct Address: Codable {
+        var name = ""
+        var street = ""
+        var city = ""
+        var zip = ""
+    }
+
+    var address = Address() {
+        didSet {
+            if let encodedAddress = try? JSONEncoder().encode(address) {
+                UserDefaults.standard.setValue(encodedAddress, forKey: "Address")
+            }
+        }
+    }
 
     var hasValidAddress: Bool {
-        if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || streetAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || zip.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if address.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || address.street.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || address.city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || address.zip.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return false
         }
 
@@ -68,5 +75,17 @@ class Order: Codable {
         }
 
         return cost
+    }
+
+    init() {
+        if let savedAddress = UserDefaults.standard.data(forKey: "Address") {
+            if let decodedAddress = try? JSONDecoder().decode(Address.self, from: savedAddress) {
+                address = decodedAddress
+
+                return
+            }
+        }
+
+        address = Address()
     }
 }
